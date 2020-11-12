@@ -10,6 +10,7 @@
 #import "ProgressReportViewController.h"
 #import "UIApplication+OpenURL.h"
 #import "UIViewController+Extras.h"
+#import "NSObject+SaneKVO.h"
 
 @interface RootsTableViewController ()
 @end
@@ -29,10 +30,10 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [Roots.instance addObserver:self forKeyPath:@"roots" options:0 context:nil];
-    [Roots.instance addObserver:self forKeyPath:@"defaultRoot" options:0 context:nil];
+    [Roots.instance observe:@[@"roots", @"defaultRoot"]
+                    options:0 target:self action:@selector(_rootsChanged)];
 }
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+- (void)_rootsChanged {
     [self.tableView reloadData];
 }
 

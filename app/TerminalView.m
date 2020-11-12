@@ -9,6 +9,7 @@
 #import "TerminalView.h"
 #import "UserPreferences.h"
 #import "UIApplication+OpenURL.h"
+#import "NSObject+SaneKVO.h"
 
 struct rowcol {
     int row;
@@ -52,13 +53,10 @@ static int kObserverStyling;
     [self addSubview:scrollbarView];
     
     UserPreferences *prefs = UserPreferences.shared;
-    [prefs addObserver:self forKeyPath:@"capsLockMapping" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"optionMapping" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"backtickMapEscape" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"overrideControlSpace" options:0 context:&kObserverMappings];
-    [prefs addObserver:self forKeyPath:@"fontFamily" options:0 context:&kObserverStyling];
-    [prefs addObserver:self forKeyPath:@"fontSize" options:0 context:&kObserverStyling];
-    [prefs addObserver:self forKeyPath:@"theme" options:0 context:&kObserverStyling];
+    [prefs observe:@[@"capsLockMapping", @"optionMapping", @"backtickMapEscape", @"overrideControlSpace"]
+           options:0 target:self action:@selector(_resetKeyCommands)];
+    [prefs observe:@[@"fontFamily", @"fontSize", @"theme"]
+           options:0 target:self action:@selector(_updateStyle)];
 
     self.markedRange = [UITextRange new];
     self.selectedRange = [UITextRange new];
@@ -73,10 +71,6 @@ static int kObserverStyling;
         if (self.terminal.loaded) {
             [self _updateStyle];
         }
-    } else if (context == &kObserverMappings) {
-        _keyCommands = nil;
-    } else if (context == &kObserverStyling) {
-        [self _updateStyle];
     }
 }
 
@@ -465,6 +459,10 @@ static const char *metaKeys = "abcdefghijklmnopqrstuvwxyz0123456789-=[]\\;',./";
                                                        action:@selector(clearScrollback:)
                                          discoverabilityTitle:@"Clear Scrollback"]];
     return _keyCommands;
+}
+
+- (void)_resetKeyCommands {
+    _keyCommands = nil;
 }
 
 - (void)addKeys:(const char *)keys withModifiers:(UIKeyModifierFlags)modifiers {

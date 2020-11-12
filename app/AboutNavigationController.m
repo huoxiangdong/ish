@@ -7,6 +7,7 @@
 
 #import "AboutNavigationController.h"
 #import "UserPreferences.h"
+#import "NSObject+SaneKVO.h"
 
 @interface AboutNavigationController ()
 
@@ -16,18 +17,17 @@
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    [[UserPreferences shared] addObserver:self forKeyPath:@"theme" options:NSKeyValueObservingOptionNew|NSKeyValueObservingOptionInitial context:nil];
+    [UserPreferences.shared observe:@[@"theme"] options:NSKeyValueObservingOptionInitial
+                             target:self action:@selector(_updateTheme)];
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+- (void)_updateTheme {
     if (@available(iOS 13, *)) {
-        if ([keyPath isEqualToString:@"theme"]) {
-            UIKeyboardAppearance appearance = UserPreferences.shared.theme.keyboardAppearance;
-            if (appearance == UIKeyboardAppearanceDark) {
-                self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
-            } else {
-                self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
-            }
+        UIKeyboardAppearance appearance = UserPreferences.shared.theme.keyboardAppearance;
+        if (appearance == UIKeyboardAppearanceDark) {
+            self.overrideUserInterfaceStyle = UIUserInterfaceStyleDark;
+        } else {
+            self.overrideUserInterfaceStyle = UIUserInterfaceStyleLight;
         }
     }
 }

@@ -16,6 +16,7 @@
 #import "SceneDelegate.h"
 #import "PasteboardDevice.h"
 #import "LocationDevice.h"
+#import "NSObject+SaneKVO.h"
 #import "Roots.h"
 #import "TerminalViewController.h"
 #import "UserPreferences.h"
@@ -208,7 +209,8 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     extern const char *uname_version;
     uname_version = self.unameVersion.UTF8String;
     
-    [UserPreferences.shared addObserver:self forKeyPath:@"shouldDisableDimming" options:NSKeyValueObservingOptionInitial context:nil];
+    [UserPreferences.shared observe:@[@"shouldDisableDimming"] options:NSKeyValueObservingOptionInitial
+                             target:self action:@selector(_updateIdleTimer)];
     
     struct sockaddr_in6 address = {
         .sin6_len = sizeof(address),
@@ -237,7 +239,7 @@ void NetworkReachabilityCallback(SCNetworkReachabilityRef target, SCNetworkReach
     return YES;
 }
 
-- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary<NSKeyValueChangeKey,id> *)change context:(void *)context {
+- (void)_updateIdleTimer {
     UIApplication.sharedApplication.idleTimerDisabled = UserPreferences.shared.shouldDisableDimming;
 }
 
